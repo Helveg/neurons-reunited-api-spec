@@ -52,9 +52,7 @@ paths:
         content:
           application/json:
             schema:
-              type: array
-              items:
-                $ref: '#/components/schemas/Filter'
+              $ref: '#/components/schemas/SearchBody'
       responses:
         '200':
           description: Search results
@@ -111,14 +109,16 @@ components:
         filters:
           type: array
           items:
-            - $ref: '#/components/schemas/MetricFilter'
-            # Later on you can capture polymorphisms of other filters by adding their schemas here
+            anyOf:
+              - $ref: '#/components/schemas/MetricFilter'
+            # Later on you could capture polymorphisms of other filters by adding their schemas here
     MetricFilter:
       type: object
       description: Filter neurons by calculating how much of a certain metric falls into a certain brain region.
       properties:
         operator:
-          $ref: '#/components/schemas/FilterOperator'
+          type: string
+          enum: [gt, lt]
         arguments:
           type: object
           properties:
@@ -138,7 +138,3 @@ components:
             unit:
               type: string
               enum: [micron, percentage, absolute]
-    FilterOperator:
-      type: string
-      enum: [gt, lt]
-        
