@@ -1,0 +1,144 @@
+openapi: '3.0.0'
+info:
+  title: Neurons Reunited API
+  description:
+    Write a nice description here Rembrandt, in CommonMark
+  version: 0.1.0
+servers:
+  - url: https://neuroinformatics.nl/HBP/neuronreunited-api
+    description: Neuroinformatics.nl hosted production environment
+paths:
+  /neurons:
+    get:
+      summary: Get a list of neuron documents.
+      description: Each document contains the neuron metadata, terms of use, and download links
+      responses:
+        '200':    # status code
+          description: A JSON array of neuron documents
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Neuron'
+  /neurons/{database}/{id}:
+    get:
+      summary: Get a neuron document.
+      parameters:
+        - in: path
+          name: database
+          description: The database the neuron originates from
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          description: The id of the neuron
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A neuron document
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Neuron'
+  /search/neurons:
+    post:
+      summary: Search for neurons matching certain filters.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/Filter'
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Neuron'
+
+components:
+  schemas:
+    Neuron:
+      type: object
+      properties:
+        database:
+          type: string
+          description: The source database that the neuron originates from. Together with the `id` they form a unique identifier of the neuron.
+        id:
+          type: string
+          description: An identifier of the neuron. Together with the `database` they form a unique identifier of the neuron.
+        terms_of_use:
+          type: object
+          description: Each neuron is available under a specific license with attribution clauses. Follow them carefully.
+          properties:
+            license:
+              type: string
+            publications:
+              type: array
+              items:
+                $ref: '#/components/schemas/Publication'
+        links:
+          type: object
+          description: Links to download locations of the neuron.
+          properties:
+            swc:
+              type: string
+              description: SWC download URL
+              example: https://neuroinformatics.nl/HBP/neuronreunited-api/swc/db/id
+            movi-json:
+              type: string
+              description: Morphology Viewer JSON download URL
+              example: https://neuroinformatics.nl/HBP/neuronreunited-api/movi-json/db/id
+    Publication:
+      type: object
+      properties:
+        doi:
+          type: string
+    SearchBody:
+      type: object
+      properties:
+        database:
+          type: string
+        filters:
+          type: array
+          items:
+            - $ref: '#/components/schemas/MetricFilter'
+            # Later on you can capture polymorphisms of other filters by adding their schemas here
+    MetricFilter:
+      type: object
+      description: Filter neurons by calculating how much of a certain metric falls into a certain brain region.
+      properties:
+        operator:
+          $ref: '#/components/schemas/FilterOperator'
+        arguments:
+          type: object
+          properties:
+            tag:
+              type: string
+              enum: [soma,axon,dendrites,basal_dendrites,apical_dendrites]
+            region:
+              type: string
+              description: The brain region the filter applies to. Use .. Allen StructureID?
+              example: VAL
+            metric:
+              type: string
+              description: The metric to measure
+              enum: [axonal_length,axon_terminals,branch_points]
+            quantity:
+              type: number
+            unit:
+              type: string
+              enum: [micron, percentage, absolute]
+    FilterOperator:
+      type: string
+      enum: [gt, lt]
+        
